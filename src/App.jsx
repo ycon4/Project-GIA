@@ -12,23 +12,55 @@ function App() {
   ]);
   const [inputMessage, setInputMessage] = useState('');
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!inputMessage.trim()) return;
     
-    setMessages([...messages, 
-      { role: 'user', content: inputMessage },
-      { role: 'assistant', content: 'This is a placeholder response. The AI model will be integrated later.' }
-    ]);
+    const userMessage = inputMessage;
     setInputMessage('');
+    
+    // Add user message
+    const newMessages = [...messages, { role: 'user', content: userMessage }];
+    setMessages(newMessages);
+    
+    // Add loading message
+    setMessages([...newMessages, { role: 'assistant', content: 'Thinking...' }]);
+    
+    try {
+      const response = await fetch('http://localhost:3001/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: userMessage })
+      });
+
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      const assistantMessage = data.reply || "I apologize, I couldn't generate a response.";
+      
+      // Replace loading message with actual response
+      setMessages([...newMessages, { role: 'assistant', content: assistantMessage }]);
+      
+    } catch (error) {
+      console.error('Error:', error);
+      setMessages([...newMessages, { 
+        role: 'assistant', 
+        content: "I'm sorry, I couldn't connect to my AI brain. Make sure the backend server is running on http://localhost:3001. Error: " + error.message
+      }]);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 relative">
       {/* Navigation */}
       <nav className="bg-white shadow-md border-b border-purple-100">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between w-full">
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-xl">GIA</span>
