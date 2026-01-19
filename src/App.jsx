@@ -27,7 +27,12 @@ function App() {
     setMessages([...newMessages, { role: 'assistant', content: 'Thinking...' }]);
     
     try {
-      const response = await fetch('http://localhost:3001/api/chat', {
+      // Auto-detect: use localhost for local dev, /api/chat for production
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? 'http://localhost:3001/api/chat'  // Local development
+        : '/api/chat';                       // Production (Vercel)
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,7 +55,7 @@ function App() {
       console.error('Error:', error);
       setMessages([...newMessages, { 
         role: 'assistant', 
-        content: "I'm sorry, I couldn't connect to my AI brain. Make sure the backend server is running on http://localhost:3001. Error: " + error.message
+        content: "I'm sorry, I encountered an error. Please try again. Error: " + error.message
       }]);
     }
   };
