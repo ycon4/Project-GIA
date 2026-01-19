@@ -73,18 +73,15 @@ export default async function handler(req, res) {
 
     console.log('📊 API Response status:', response.status);
 
+    // Get response text first
+    const responseText = await response.text();
+    console.log('📄 Response text:', responseText.substring(0, 200));
+
     if (!response.ok) {
-      let errorText;
-      try {
-        errorText = await response.text();
-      } catch (e) {
-        errorText = 'Unable to parse error response';
-      }
-      
-      console.error('❌ Hugging Face API error:', errorText);
+      console.error('❌ Hugging Face API error:', responseText);
       
       // Check if model is loading
-      if (response.status === 503) {
+      if (response.status === 503 || responseText.includes('loading')) {
         return res.status(200).json({ 
           reply: "I'm currently warming up! The AI model is loading. Please try again in about 20-30 seconds." 
         });
@@ -92,11 +89,23 @@ export default async function handler(req, res) {
       
       return res.status(500).json({ 
         error: `API error: ${response.status}`,
-        details: errorText 
+        details: responseText 
       });
     }
 
-    const data = await response.json();
+    // Try to parse JSON response
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('❌ JSON parse error:', parseError);
+      console.error('Response was:', responseText);
+      return res.status(500).json({ 
+        error: 'Invalid response from AI service',
+        details: 'The AI service returned an unexpected format. Please try again.'
+      });
+    }
+
     console.log('📥 Received data from API');
     
     // Extract the message from OpenAI-compatible response
