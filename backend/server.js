@@ -34,7 +34,7 @@ You support outputs such as tables, charts, and data visualizations when relevan
 
 You maintain accuracy, data privacy, and responsible interpretation at all times, without offering personal opinions or unsupported recommendations.`;
 
-// Chat endpoint
+// Chat endpointt
 app.post('/api/chat', async (req, res) => {
   console.log('📨 Received chat request:', req.body);
   
